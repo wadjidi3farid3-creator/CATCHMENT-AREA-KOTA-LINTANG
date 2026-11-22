@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>terpadu | Google Earth</title>
+
+<style>
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+    background: #101820;
+    color: white;
+}
+
+.container {
+    max-width: 600px;
+    margin: 40px auto;
+    background: #1b2730;
+    border-radius: 18px;
+    padding: 25px;
+}
+
+h1 {
+    font-size: 22px;
+    overflow-wrap: anywhere;
+}
+
+p {
+    color: #b9c8d3;
+    line-height: 1.6;
+}
+
+.button {
+    display: block;
+    text-decoration: none;
+    padding: 16px;
+    border-radius: 12px;
+    margin-top: 15px;
+    text-align: center;
+    font-weight: bold;
+}
+
+.primary {
+    background: #34a853;
+    color: white;
+}
+
+.secondary {
+    background: #4285f4;
+    color: white;
+}
+
+.download {
+    background: #455a64;
+    color: white;
+}
+
+.footer {
+    margin-top: 25px;
+    font-size: 12px;
+    color: #90a4ae;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>terpadu</h1>
+
+<p>
+Paket data spasial KML/KMZ untuk Google Earth.
+Pilih metode membuka peta di bawah ini.
+</p>
+
+<a class="button primary" href="terpadu.kmz">
+BUKA / UNDUH PETA KMZ
+</a>
+
+<a class="button secondary"
+   href="https://earth.google.com/web/@4.2835910,98.0659280,1000a,1000d,35y,0h,0t,0r"
+   target="_blank"
+   rel="noopener">
+BUKA GOOGLE EARTH WEB
+</a>
+
+<a class="button download" href="terpadu.kml">
+UNDUH FILE KML
+</a>
+
+<div class="footer">
+Paket peta ini dibuat melalui QGIS KML to GitHub Earth Package.
+</div>
+
+</div>
+
+</body>
+</html>

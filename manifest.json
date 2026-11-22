@@ -1,0 +1,19 @@
+{
+    "package_name": "terpadu_GITHUB",
+    "source_file": "terpadu.kml",
+    "created": "2026-11-22T11:40:13.327215",
+    "package_version": "1.0",
+    "coordinate_center": {
+        "latitude": 4.283590955437259,
+        "longitude": 98.0659280309968
+    },
+    "files": {
+        "html": "index.html",
+        "kml": "terpadu.kml",
+        "kmz": "terpadu.kmz"
+    },
+    "links": {
+        "google_earth_web": "https://earth.google.com/web/@4.2835910,98.0659280,1000a,1000d,35y,0h,0t,0r"
+    },
+    "purpose": "GitHub distribution package for Google Earth"
+}
