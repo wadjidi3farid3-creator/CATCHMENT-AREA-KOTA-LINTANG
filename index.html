@@ -1,0 +1,122 @@
+<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>terpadu</title>
+<link rel="stylesheet" href="LIBRARY/leaflet/leaflet.css" onerror="this.onerror=null;this.href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'">
+<style>
+*{box-sizing:border-box}html,body,#map{height:100%;width:100%;margin:0;font-family:Arial,sans-serif}#map{background:#fff}
+#side{position:absolute;z-index:1000;top:10px;left:10px;width:340px;max-width:85vw;max-height:calc(100% - 20px);background:#fff;border-radius:8px;box-shadow:0 1px 6px #0004;display:flex;flex-direction:column;font-size:13px}
+#head{display:flex;align-items:center;justify-content:space-between;padding:7px 9px;border-bottom:1px solid #ddd;flex:none}
+#head button{border:0;background:#eee;border-radius:5px;padding:3px 10px;cursor:pointer;font-weight:bold}
+#sbody{overflow:auto;padding:7px 8px;flex:1;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+#q{width:100%;padding:6px;border:1px solid #bbb;border-radius:5px;margin-bottom:5px;font-size:16px}
+#res{max-height:160px;overflow:auto}#res div{padding:4px 2px;cursor:pointer;border-bottom:1px solid #eee;overflow-wrap:anywhere}
+.row{display:flex;align-items:flex-start;gap:4px;padding:2px 0}.arr{width:14px;cursor:pointer;flex:none;user-select:none;text-align:center}
+.lab{cursor:pointer;overflow-wrap:anywhere;flex:1}.row.dim .lab{opacity:.45}.kids{margin-left:14px;border-left:1px dotted #bbb;padding-left:4px}
+.btns{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}.btns button{flex:1 1 45%;border:0;background:#eef2f7;padding:7px;border-radius:6px;font-weight:bold;cursor:pointer}
+.base{border-top:1px solid #ddd;margin-top:8px;padding-top:7px}
+.status{position:absolute;z-index:999;top:8px;left:50%;transform:translateX(-50%);background:#fff;padding:7px 10px;border-radius:7px;box-shadow:0 1px 5px #0003;font-size:12px;max-width:90vw;text-align:center}
+.leaflet-popup-content{max-width:75vw;overflow-wrap:anywhere}.leaflet-popup-content table{border-collapse:collapse}.leaflet-popup-content td{border-bottom:1px solid #ddd;padding:3px;vertical-align:top}
+.pp .desc{max-height:220px;overflow:auto;margin:4px 0}.pp img{max-width:100%}
+.dot span{display:block;width:12px;height:12px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 3px #0008}
+#fab{display:none;position:absolute;z-index:1000;left:10px;bottom:calc(10px + env(safe-area-inset-bottom,0px));border:0;background:#fff;box-shadow:0 1px 6px #0006;border-radius:26px;padding:13px 20px;font-size:15px;font-weight:bold;cursor:pointer}
+#close{display:none}
+body.compact #fab{display:block}body.compact.sheet #fab{display:none}
+body.compact #side{display:none;position:fixed;left:0;right:0;bottom:0;top:auto;width:100%;max-width:100%;max-height:62vh;max-height:62dvh;border-radius:14px 14px 0 0;padding-bottom:env(safe-area-inset-bottom,0px)}
+body.compact.sheet #side{display:flex}
+body.compact #min{display:none}body.compact #close{display:inline-block}
+@media (orientation:landscape){body.compact #side{top:0;bottom:0;right:auto;width:min(50vw,360px);max-height:none;border-radius:0 12px 12px 0;padding-bottom:0}}
+@media (pointer:coarse){.row{align-items:center;min-height:44px}.row input{width:24px;height:24px;flex:none}.arr{width:34px;font-size:20px}.btns button{padding:13px 8px}#res div{padding:12px 4px}.base label{display:inline-block;padding:7px 0}#head button{padding:8px 16px}}
+</style></head><body><div id="map"></div><div class="status" id="status">Memuat data WebGIS…</div>
+<button id="fab">☰ Layer</button>
+<div id="side"><div id="head"><b>Layer KML/KMZ</b><span><button id="min" title="Ciutkan/bentangkan">–</button><button id="close" title="Tutup panel">✕ Tutup</button></span></div>
+<div id="sbody"><input id="q" type="search" placeholder="Cari nama objek…"><div id="res"></div><div id="tree"></div>
+<div class="btns"><button id="fit">⌖ Zoom Seluruh Data</button><button id="gps">◎ Lokasi Saya</button><button id="allon">☑ Aktifkan Semua</button><button id="alloff">☐ Matikan Semua</button></div>
+<div class="base"><b>Basemap</b><br><label><input type="radio" name="base" value="Blank" checked> Layar Putih (Offline)</label><br><label><input type="radio" name="base" value="OpenStreetMap"> OpenStreetMap</label><br><label><input type="radio" name="base" value="Google Hybrid"> Google Hybrid</label><br><label><input type="radio" name="base" value="Google Satellite"> Google Satellite</label><br><small>WGS 84 / EPSG:4326</small></div></div></div>
+<script src="LIBRARY/leaflet/leaflet.js"></script><script>window.L||document.write('<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"><\/script>')</script><script src="04_WEBGIS_DATA_01.js"></script><script>
+'use strict';
+var map=L.map('map',{zoomControl:false,renderer:L.canvas({padding:.5,tolerance:8})}).setView([-2.5,118],5);
+L.control.zoom({position:'topright'}).addTo(map);L.control.scale({position:'bottomright',imperial:false}).addTo(map);
+map.createPane('imgs').style.zIndex=350;
+var bases={'OpenStreetMap':L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}),
+'Google Hybrid':L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',{maxZoom:21,attribution:'© Google'}),
+'Google Satellite':L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',{maxZoom:21,attribution:'© Google'})};
+var side=document.getElementById('side');L.DomEvent.disableClickPropagation(side);L.DomEvent.disableScrollPropagation(side);
+var mq=window.matchMedia('(max-width:700px),(max-height:520px)');
+function setCompact(){document.body.classList.toggle('compact',mq.matches);if(!mq.matches)document.body.classList.remove('sheet')}
+setCompact();if(mq.addEventListener)mq.addEventListener('change',setCompact);else if(mq.addListener)mq.addListener(setCompact);
+function closeSheet(){if(document.body.classList.contains('compact'))document.body.classList.remove('sheet')}
+document.getElementById('fab').onclick=function(){document.body.classList.add('sheet')};
+document.getElementById('close').onclick=function(){document.body.classList.remove('sheet')};
+function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function clean(html){var doc=new DOMParser().parseFromString('<div>'+html+'</div>','text/html'),r=doc.body.firstChild;
+r.querySelectorAll('script,style,iframe,object,embed,link,meta,base,form').forEach(function(e){e.remove()});
+r.querySelectorAll('*').forEach(function(e){Array.from(e.attributes).forEach(function(a){var n=a.name.toLowerCase(),v=a.value.trim().toLowerCase();
+if(n.indexOf('on')===0||((n==='href'||n==='src')&&v.indexOf('javascript:')===0))e.removeAttribute(a.name)});
+if(e.tagName==='A'){e.setAttribute('target','_blank');e.setAttribute('rel','noopener')}});return r.innerHTML}
+function popupHtml(f){var p=f.properties||{},h='<div class="pp"><b>'+esc(p.name||'')+'</b>';
+if(p.description)h+='<div class="desc">'+clean(p.description)+'</div>';
+var rows=Object.keys(p).filter(function(k){return k!=='name'&&k!=='description'&&p[k]!==''&&p[k]!=null&&typeof p[k]!=='object'});
+if(rows.length)h+='<table>'+rows.map(function(k){return '<tr><td><b>'+esc(k)+'</b></td><td>'+esc(p[k])+'</td></tr>'}).join('')+'</table>';
+return h+'</div>'}
+function applyStyle(l,st){
+if(typeof l.eachLayer==='function'){l.eachLayer(function(x){applyStyle(x,st)});return}
+if(l instanceof L.Polygon)l.setStyle({stroke:st.stroke!==false,color:st.color,weight:st.weight,opacity:st.opacity,fill:st.fill!==false,fillColor:st.fillColor,fillOpacity:st.fillOpacity});
+else if(l instanceof L.Polyline)l.setStyle({color:st.color,weight:st.weight,opacity:st.opacity,fill:false});
+else if(l instanceof L.CircleMarker)l.setStyle({radius:5,color:'#ffffff',weight:1,fillColor:st.color,fillOpacity:.95})}
+function mkPoint(ll,st){
+if(st.icon&&st.icon.src){var sc=st.icon.scale||1,w=Math.max(8,Math.round(32*sc)),h=w,hot=st.icon.hot,ax=w/2,ay=h/2;
+if(hot){ax=hot[2]==='pixels'?hot[0]:hot[0]*w;ay=hot[3]==='pixels'?(h-hot[1]):(1-hot[1])*h}
+var m=L.marker(ll,{icon:L.icon({iconUrl:st.icon.src,iconSize:[w,h],iconAnchor:[ax,ay],popupAnchor:[0,-h/2]})});
+m.on('add',function(){var im=m._icon;if(im&&im.tagName==='IMG'&&!im._h){im._h=1;im.onerror=function(){m.setIcon(L.divIcon({className:'dot',html:'<span style="background:'+esc(st.color)+'"></span>',iconSize:[14,14]}))}}});
+return m}
+return L.circleMarker(ll,{radius:5})}
+function ensureLayer(n){if(n.layer)return n.layer;
+if(n.t==='O'){var d=n.d;n.layer=L.imageOverlay(d.img,d.b,{opacity:d.op,pane:'imgs',interactive:false});return n.layer}
+var f=n.src.features[n.d.i],st=n.src.styles[f.wg.s]||{};
+var g=L.geoJSON({type:'Feature',geometry:f.geometry,properties:{}},{pointToLayer:function(ft,ll){return mkPoint(ll,st)}});
+applyStyle(g,st);g.bindPopup(function(){return popupHtml(f)},{maxWidth:360});
+if(f.properties&&f.properties.name)g.bindTooltip(esc(f.properties.name),{sticky:true});
+n.layer=g;return g}
+var roots=[],allP=[];
+function mk(d,parent,src){var n={d:d,t:d.t,parent:parent,src:src,on:d.v!==false,kids:[],layer:null,els:null,built:false,open:false};
+if(d.c)d.c.forEach(function(c){n.kids.push(mk(c,n,src))});
+if(d.t==='P'||d.t==='O'){n.cnt=1;if(d.t==='P')allP.push(n)}else n.cnt=n.kids.reduce(function(a,k){return a+k.cnt},0);return n}
+function eff(n){for(var x=n;x;x=x.parent)if(!x.on)return false;return true}
+function sync(n,pe){var e=pe&&n.on;
+if(n.t==='P'||n.t==='O'){if(e){var l=ensureLayer(n);if(!map.hasLayer(l))l.addTo(map)}else if(n.layer&&map.hasLayer(n.layer))map.removeLayer(n.layer)}
+else{for(var i=0;i<n.kids.length;i++)sync(n.kids[i],e)}}
+function dim(n){if(n.els)n.els.row.classList.toggle('dim',!eff(n));if(n.built)for(var i=0;i<n.kids.length;i++)dim(n.kids[i])}
+function bnds(n){var b=n.d.bb;return b?L.latLngBounds([[b[1],b[0]],[b[3],b[2]]]):null}
+function topOf(n){while(n.parent)n=n.parent;return n}
+function setOnChain(n){var ch=false;for(var x=n;x;x=x.parent){if(!x.on){x.on=true;ch=true;if(x.els)x.els.cb.checked=true}}if(ch){var t=topOf(n);sync(t,true);dim(t)}}
+function zoomTo(n){closeSheet();setOnChain(n);var b=bnds(n);if(b)map.fitBounds(b,{maxZoom:19,padding:[30,30]})}
+function goTo(n){closeSheet();setOnChain(n);var b=bnds(n);if(!b)return;map.fitBounds(b,{maxZoom:17,padding:[40,40],animate:false});
+if(n.t==='P'){var l=ensureLayer(n);try{l.openPopup(b.getCenter())}catch(e){}}}
+function iconFor(n){if(n.t==='O')return '🖼';var g=n.src.features[n.d.i].geometry.type;return g==='Point'?'●':g==='LineString'?'╱':g==='Polygon'?'▱':'◆'}
+function mkRow(n){var isF=(n.t==='F'||n.t==='D'),wrap=document.createElement('div'),row=document.createElement('div');row.className='row';
+var arr=document.createElement('span');arr.className='arr';
+var cb=document.createElement('input');cb.type='checkbox';cb.checked=n.on;
+var ico=document.createElement('span');ico.textContent=isF?'📁':iconFor(n);
+var lab=document.createElement('span');lab.className='lab';lab.textContent=n.d.n+(isF?' ('+n.cnt+')':'');
+row.appendChild(arr);row.appendChild(cb);row.appendChild(ico);row.appendChild(lab);wrap.appendChild(row);n.els={row:row,cb:cb};
+if(isF){var kd=document.createElement('div');kd.className='kids';wrap.appendChild(kd);
+var setOpen=function(o){n.open=o;arr.textContent=n.kids.length?(o?'▾':'▸'):'';kd.style.display=o?'':'none';
+if(o&&!n.built){n.built=true;n.kids.forEach(function(k){kd.appendChild(mkRow(k))});dim(n)}};
+arr.onclick=function(){setOpen(!n.open)};lab.onclick=function(){zoomTo(n)};setOpen(!!n.d.o)}
+else{lab.onclick=function(){goTo(n)}}
+cb.onchange=function(){n.on=cb.checked;sync(n,n.parent?eff(n.parent):true);dim(n)};return wrap}
+function setAll(n,v){n.on=v;if(n.els)n.els.cb.checked=v;n.kids.forEach(function(k){setAll(k,v)})}
+function fitAll(){var b=null;roots.forEach(function(r){var x=bnds(r);if(x)b=b?b.extend(x):x});if(b&&b.isValid())map.fitBounds(b.pad(.04))}
+function locate(){if(!navigator.geolocation){alert('GPS tidak didukung browser');return}
+navigator.geolocation.getCurrentPosition(function(p){var ll=[p.coords.latitude,p.coords.longitude];L.circleMarker(ll,{radius:7,color:'#087443'}).addTo(map).bindPopup('Lokasi Saya').openPopup();map.setView(ll,17)},function(e){alert('Lokasi tidak tersedia: '+e.message)},{enableHighAccuracy:true,timeout:15000})}
+document.getElementById('fit').onclick=fitAll;document.getElementById('gps').onclick=locate;
+document.getElementById('allon').onclick=function(){roots.forEach(function(r){setAll(r,true);sync(r,true);dim(r)})};
+document.getElementById('alloff').onclick=function(){roots.forEach(function(r){setAll(r,false);sync(r,true);dim(r)})};
+document.getElementById('min').onclick=function(){var b=document.getElementById('sbody');b.hidden=!b.hidden};
+document.getElementById('q').oninput=function(){var q=this.value.trim().toLowerCase(),res=document.getElementById('res');res.innerHTML='';if(q.length<2)return;var c=0;
+for(var i=0;i<allP.length&&c<50;i++){var n=allP[i];if(String(n.d.n).toLowerCase().indexOf(q)>=0){c++;var d=document.createElement('div');d.textContent=n.d.n;(function(n){d.onclick=function(){goTo(n)}})(n);res.appendChild(d)}}
+if(!c)res.textContent='Tidak ditemukan'};
+document.addEventListener('change',function(e){if(e.target.name==='base'){Object.keys(bases).forEach(function(k){map.removeLayer(bases[k])});if(e.target.value!=='Blank')bases[e.target.value].addTo(map)}});
+var loaded=0,total=0,ovl=0;
+(window.__WEBGIS_DATA__||[]).forEach(function(item){try{var d=item.data,t=mk(d.tree,null,d);t.d.o=true;roots.push(t);document.getElementById('tree').appendChild(mkRow(t));sync(t,true);dim(t);loaded++;total+=d.features.length;ovl+=d.metadata.overlay_count||0}catch(e){console.error(e)}});
+var st=document.getElementById('status');
+if(loaded){fitAll();st.textContent='Data dimuat: '+loaded+' sumber | '+total+' objek'+(ovl?' | '+ovl+' overlay':'')+' | Basemap awal: Layar Putih';setTimeout(function(){st.remove()},6000)}else st.textContent='Tidak ada data yang berhasil dimuat.';
+</script></body></html>
